@@ -1,0 +1,15 @@
+dependencies:
+- name: opentelemetry-collector
+  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+  version: 0.45.0
+- name: jaeger
+  repository: https://jaegertracing.github.io/helm-charts
+  version: 0.66.1
+- name: prometheus
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 19.3.1
+- name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 6.50.0
+digest: sha256:5224064758b33f898b0b8f24e196ef649db1cb9ef635ae737abc25deca2dacf8
+generated: "2023-01-17T15:43:58.717955-07:00"

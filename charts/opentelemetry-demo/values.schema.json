@@ -34,6 +34,9 @@
     },
     "grafana": {
       "type": "object"
+    },
+    "wavefront": {
+      "$ref": "#/definitions/Wavefront"
     }
   },
   "required": [
@@ -626,6 +629,18 @@
       "required": [
         "enabled"
       ]
+    },
+    "Wavefront": {
+      "type": "object",
+      "properties": {
+         "token": {
+           "type": "string"
+         },
+         "url": {
+           "type": "string"
+          }
+         },
+         "title": "wavefront"
     }
   }
 }

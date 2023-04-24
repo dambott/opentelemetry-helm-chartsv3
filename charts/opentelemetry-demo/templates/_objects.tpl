@@ -14,6 +14,7 @@ spec:
     metadata:
       labels:
         {{- include "otel-demo.selectorLabels" . | nindent 8 }}
+        {{- include "otel-demo.workloadLabels" . | nindent 8 }}
       {{- if .podAnnotations }}
       annotations:
         {{- toYaml .podAnnotations | nindent 8 }}
@@ -23,9 +24,7 @@ spec:
       imagePullSecrets:
         {{- ((.imageOverride).pullSecrets) | default .defaultValues.image.pullSecrets | toYaml | nindent 8}}
       {{- end }}
-      {{- if .serviceAccount }}
-      serviceAccountName: {{ .serviceAccount}}
-      {{- end }}
+      serviceAccountName: {{ include "otel-demo.serviceAccountName" .}}
       {{- $schedulingRules := .schedulingRules | default dict }}
       {{- if or .defaultValues.schedulingRules.nodeSelector $schedulingRules.nodeSelector}}
       nodeSelector:
@@ -72,6 +71,10 @@ spec:
           configMap:
             name: {{ include "otel-demo.name" . }}-{{ .name }}-config
       {{- end }}
+      {{- if .initContainers }}
+      initContainers:
+        {{- tpl (toYaml .initContainers) . | nindent 8 }}
+      {{- end}}
 {{- end }}
 
 {{- define "otel-demo.service" }}
@@ -101,7 +104,7 @@ spec:
 
     {{- if $service.port }}
     - port: {{ $service.port}}
-      name: service
+      name: tcp-service
       targetPort: {{ $service.port }}
       {{- if $service.nodePort }}
       nodePort: {{ $service.nodePort }}

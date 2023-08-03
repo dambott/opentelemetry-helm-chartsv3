@@ -36,11 +36,37 @@ spec:
         env:
         - name: WAVEFRONT_URL
           value: {{ .Values.wavefront.url }}
+        {{- if eq .Values.wavefront.AuthType "wavefront-token"}}
         - name: WAVEFRONT_TOKEN
+          valueFrom:
+             secretKeyRef:
+               name: wf-token
+               key: token
+        {{- end }}
+        {{- if eq .Values.wavefront.AuthType "csp-api-token"}}
+        - name: CSP_API_TOKEN
           valueFrom:
             secretKeyRef:
               name: wf-token
-              key: token
+              key: cspApiToken
+        {{- end }}
+        {{- if eq .Values.wavefront.AuthType "csp-app-oauth"}}
+        - name: CSP_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: wf-token
+              key: cspAppSecret
+        - name: CSP_APP_ID
+          valueFrom:
+            secretKeyRef:
+              name: wf-token
+              key: cspAppId
+        - name: CSP_ORG_ID
+          valueFrom:
+            secretKeyRef:
+              name: wf-token
+              key: cspOrgId
+        {{- end }}
         # Uncomment the below lines to consume Zipkin/Istio traces
         - name: WAVEFRONT_PROXY_ARGS
           value: --customTracingListenerPorts 30001 --customMessageTags log --pushListenerPorts 2878 --otlpGrpcListenerPorts 4317 --otlpHttpListenerPorts 4318

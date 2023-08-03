@@ -1,7 +1,15 @@
 wavefront:
-     token: <YourToken>
-     url: "https://<YOUR URL>/.wavefront.com/api/"
-
+  # Auth.Type: one of : wavefront-token, csp-api-token, or csp-app-oauth
+  # Then use either the token, or the csp-api-token, or the OAuth2 csp-app-secret, csp-app-id and csp-org-id
+  AuthType: "csp-app-oauth"
+  token: <Your AOA/Wavefront Token>
+  cspApiToken: <Your CSP API token>
+  cspAppId: <Your CSP APP Id>
+  cspAppSecret: <Your CSP APP secret>
+  cspOrgId: <Your CSP Org Id>
+# Set your URL for the tenant you are on e.g. longboard, surf, metrics etc.
+  url: "https://<YOUR URL>..wavefront.com/api/"
+# Set your cluster name on line 51
 default:
   # list of environment variables applied to all components
   env:
@@ -40,7 +48,7 @@ default:
     - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
       value: cumulative
     - name: OTEL_RESOURCE_ATTRIBUTES
-      value: cluster=<YourClusterName>,service.name=$(OTEL_SERVICE_NAME),service.instance.id=$(OTEL_K8S_POD_UID),service.namespace=opentelemetry-demo,k8s.namespace.name=$(OTEL_K8S_NAMESPACE),k8s.node.name=$(OTEL_K8S_NODE_NAME),k8s.pod.name=$(OTEL_K8S_POD_NAME),application=$(OTEL_APPLICATION_NAME)
+      value: cluster=<Your Cluster Name>,service.name=$(OTEL_SERVICE_NAME),service.instance.id=$(OTEL_K8S_POD_UID),service.namespace=opentelemetry-demo,k8s.namespace.name=$(OTEL_K8S_NAMESPACE),k8s.node.name=$(OTEL_K8S_NODE_NAME),k8s.pod.name=$(OTEL_K8S_POD_NAME),application=$(OTEL_APPLICATION_NAME)
   # Allows overriding and additions to .Values.default.env
   envOverrides: []
   #  - name: OTEL_K8S_NODE_NAME

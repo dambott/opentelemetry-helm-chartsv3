@@ -617,7 +617,22 @@
     "Wavefront": {
       "type": "object",
       "properties": {
+         "AuthType": {
+           "type": "string"
+         },
          "token": {
+           "type": "string"
+         },
+         "cspApiToken": {
+           "type": "string"
+         },
+         "cspAppSecret": {
+           "type": "string"
+         },
+         "cspAppId": {
+           "type": "string"
+         },
+         "cspOrgId": {
            "type": "string"
          },
          "url": {

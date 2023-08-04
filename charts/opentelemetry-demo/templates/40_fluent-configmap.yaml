@@ -139,7 +139,7 @@
     version "${record.dig('kubernetes', 'labels', 'version')? record.dig('kubernetes', 'labels', 'version') : 'none'}"
     container "${record.dig('kubernetes', 'container_name')? record.dig('kubernetes', 'container_name') : 'none'}"
     namespace "${record.dig('kubernetes', 'namespace_name')? record.dig('kubernetes', 'namespace_name') : 'none'}"
-    cluster_name "rke-azure-us-east"
+    cluster_name "rke-azure-us-east-01"
     # timestamp ${time.to_datetime().strftime('%Q')}
   </record>
   remove_keys kubernetes, docker

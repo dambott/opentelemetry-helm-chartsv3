@@ -1,6 +1,6 @@
 wavefront:
-  token: "ee822f44-70e2-4ac7-adaf-3aae2b2c0860"
-  url: "https://kibo.wavefront.com/api/"
+  token: "3621d2d2-7fbe-478e-a238-0cc0d7fd1c7b"
+  url: "https://demo.wavefront.com/api/"
 
 default:
   # list of environment variables applied to all components

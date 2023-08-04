@@ -637,6 +637,12 @@
          },
          "url": {
            "type": "string"
+          },
+         "logURL": {
+           "type": "string"
+          },
+         "logToken": {
+           "type": "string"
           }
          },
          "title": "wavefront"

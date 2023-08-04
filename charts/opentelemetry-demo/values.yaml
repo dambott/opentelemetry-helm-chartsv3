@@ -1,5 +1,5 @@
 wavefront:
-  # Auth.Type: one of : wavefront-token, csp-api-token, or csp-app-oauth
+  # AuthType: one of : wavefront-token, csp-api-token, or csp-app-oauth
   # Then use either the token, or the csp-api-token, or the OAuth2 csp-app-secret, csp-app-id and csp-org-id
   AuthType: "csp-app-oauth"
   token: <Your AOA/Wavefront Token>
@@ -9,7 +9,15 @@ wavefront:
   cspOrgId: <Your CSP Org Id>
 # Set your URL for the tenant you are on e.g. longboard, surf, metrics etc.
   url: "https://<YOUR URL>..wavefront.com/api/"
-# Set your cluster name on line 51
+# Set your cluster name on line 60
+# Leave these 2 log lines with empty strings and uncommented if not usings logs
+  logToken: ""
+  logURL: ""
+#  If using them the format needs to be like this, obtained from Aria Operations for Logs when creating an API Key:
+#  The quotes around the strings do matter
+#  logToken: "--logServerIngestionURL <Your URL here>"
+#  logURL: "--logServerIngestionToken <Your Token Here"
+
 default:
   # list of environment variables applied to all components
   env:
@@ -371,7 +379,7 @@ components:
         value: http://localhost:4318/v1/traces             # This expects users to use `kubectl port-forward ...`
     resources:
       limits:
-        memory: 200Mi
+        memory: 400Mi
     securityContext:
       runAsUser: 1001  # nextjs
       runAsGroup: 1001

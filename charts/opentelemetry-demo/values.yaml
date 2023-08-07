@@ -274,8 +274,8 @@ components:
         value: "8080"
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
         value: http://$(OTEL_COLLECTOR_NAME):4317
-      - name: FEATURE_FLAG_GRPC_SERVICE_PORT
-        value: "50053"
+      - name: FEATURE_FLAG_GRPC_SERVICE_ADDR
+        value: '{{ include "otel-demo.name" . }}-featureflagservice:50053'
     resources:
       limits:
         memory: 20Mi

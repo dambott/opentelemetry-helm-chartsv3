@@ -30,6 +30,7 @@ Configure the *values.yaml* to change authentication (WF Token or CSP) and Clust
 
 ```console
 cd opentelemetry-helm-chartsv3*
+cd charts/opentelemetry-demo/
 vim values.yaml
 ```
 

@@ -280,7 +280,8 @@ components:
       limits:
         memory: 20Mi
     imageOverride:
-      repository: bdekany/currencyservice:0.4.1-fail 
+      repository: bdekany/currencyservice
+      tag: 0.4.1-fail 
 
   # Fake deploy that is stale in pending
   currencyServiceNew:
@@ -300,7 +301,8 @@ components:
       requests:
         memory: "2048Gi"
     imageOverride:
-      repository: bdekany/currencyservice:0.4.1-fail 
+      repository: bdekany/currencyservice
+      tag: 0.4.1-fail 
 
   emailService:
     enabled: true
@@ -353,7 +355,8 @@ components:
         image: busybox:latest
         command: ['sh', '-c', 'until nc -z -v -w30 {{ include "otel-demo.name" . }}-ffspostgres 5432; do echo waiting for ffspostgres; sleep 2; done']
     imageOverride:
-      repository: bdekany/featureflagservice:0.4.0-fail
+      repository: bdekany/featureflagservice
+      tag: 0.4.0-fail
 
   frauddetectionService:
     enabled: true

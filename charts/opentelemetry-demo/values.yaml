@@ -1,6 +1,22 @@
 wavefront:
-  token: "3621d2d2-7fbe-478e-a238-0cc0d7fd1c7b"
-  url: "https://demo.wavefront.com/api/"
+  # AuthType: one of : wavefront-token, csp-api-token, or csp-app-oauth
+  # Then use either the token, or the csp-api-token, or the OAuth2 csp-app-secret, csp-app-id and csp-org-id
+  AuthType: "csp-app-oauth"
+  token: <Your AOA/Wavefront Token>
+  cspApiToken: <Your CSP API token>
+  cspAppId: <Your CSP APP Id>
+  cspAppSecret: <Your CSP APP secret>
+  cspOrgId: <Your CSP Org Id>
+# Set your URL for the tenant you are on e.g. longboard, surf, metrics etc.
+  url: "https://<YOUR URL>..wavefront.com/api/"
+# Set your cluster name on line 60
+# Leave these 2 log lines with empty strings and uncommented if not usings logs
+  logToken: ""
+  logURL: ""
+#  If using them the format needs to be like this, obtained from Aria Operations for Logs when creating an API Key:
+#  The quotes around the strings do matter
+#  logToken: "--logServerIngestionURL <Your URL here>"
+#  logURL: "--logServerIngestionToken <Your Token Here"
 
 default:
   # list of environment variables applied to all components
@@ -40,7 +56,7 @@ default:
     - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
       value: cumulative
     - name: OTEL_RESOURCE_ATTRIBUTES
-      value: cluster=rke-azure-us-east,service.name=$(OTEL_SERVICE_NAME),service.instance.id=$(OTEL_K8S_POD_UID),service.namespace=opentelemetry-demo,k8s.namespace.name=$(OTEL_K8S_NAMESPACE),k8s.node.name=$(OTEL_K8S_NODE_NAME),k8s.pod.name=$(OTEL_K8S_POD_NAME),application=$(OTEL_APPLICATION_NAME)
+      value: cluster=<Your Cluster Name>,service.name=$(OTEL_SERVICE_NAME),service.instance.id=$(OTEL_K8S_POD_UID),service.namespace=opentelemetry-demo,k8s.namespace.name=$(OTEL_K8S_NAMESPACE),k8s.node.name=$(OTEL_K8S_NODE_NAME),k8s.pod.name=$(OTEL_K8S_POD_NAME),application=$(OTEL_APPLICATION_NAME)
   # Allows overriding and additions to .Values.default.env
   envOverrides: []
   #  - name: OTEL_K8S_NODE_NAME
@@ -258,9 +274,33 @@ components:
         value: "8080"
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
         value: http://$(OTEL_COLLECTOR_NAME):4317
+      - name: FEATURE_FLAG_GRPC_SERVICE_PORT
+        value: "50053"
     resources:
       limits:
         memory: 20Mi
+    imageOverride:
+      repository: bdekany/currencyservice:0.4.1-fail 
+
+  # Fake deploy that is stale in pending
+  currencyServiceNew:
+    enabled: true
+    useDefault:
+      env: true
+    service:
+      port: 8080
+    env:
+      - name: CURRENCY_SERVICE_PORT
+        value: "8080"
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://$(OTEL_COLLECTOR_NAME):4317
+      - name: FEATURE_FLAG_GRPC_SERVICE_PORT
+        value: "50053"
+    resources:
+      requests:
+        memory: "2048Gi"
+    imageOverride:
+      repository: bdekany/currencyservice:0.4.1-fail 
 
   emailService:
     enabled: true
@@ -312,6 +352,8 @@ components:
       - name: wait-for-ffspostgres
         image: busybox:latest
         command: ['sh', '-c', 'until nc -z -v -w30 {{ include "otel-demo.name" . }}-ffspostgres 5432; do echo waiting for ffspostgres; sleep 2; done']
+    imageOverride:
+      repository: bdekany/featureflagservice:0.4.0-fail
 
   frauddetectionService:
     enabled: true
@@ -363,7 +405,7 @@ components:
         value: http://localhost:4318/v1/traces             # This expects users to use `kubectl port-forward ...`
     resources:
       limits:
-        memory: 200Mi
+        memory: 400Mi
     securityContext:
       runAsUser: 1001  # nextjs
       runAsGroup: 1001

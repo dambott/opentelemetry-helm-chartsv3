@@ -75,6 +75,9 @@
         "currencyService": {
           "$ref": "#/definitions/Component"
         },
+        "currencyServiceNew": {
+          "$ref": "#/definitions/Component"
+        },
         "emailService": {
           "$ref": "#/definitions/Component"
         },

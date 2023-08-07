@@ -274,9 +274,35 @@ components:
         value: "8080"
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
         value: http://$(OTEL_COLLECTOR_NAME):4317
+      - name: FEATURE_FLAG_GRPC_SERVICE_ADDR
+        value: '{{ include "otel-demo.name" . }}-featureflagservice:50053'
     resources:
       limits:
         memory: 20Mi
+    imageOverride:
+      repository: bdekany/currencyservice
+      tag: 0.4.1-fail 
+
+  # Fake deploy that is stale in pending
+  currencyServiceNew:
+    enabled: true
+    useDefault:
+      env: true
+    service:
+      port: 8080
+    env:
+      - name: CURRENCY_SERVICE_PORT
+        value: "8080"
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://$(OTEL_COLLECTOR_NAME):4317
+      - name: FEATURE_FLAG_GRPC_SERVICE_PORT
+        value: "50053"
+    resources:
+      requests:
+        memory: "2048Gi"
+    imageOverride:
+      repository: bdekany/currencyservice
+      tag: 0.4.1-fail 
 
   emailService:
     enabled: true
@@ -328,6 +354,9 @@ components:
       - name: wait-for-ffspostgres
         image: busybox:latest
         command: ['sh', '-c', 'until nc -z -v -w30 {{ include "otel-demo.name" . }}-ffspostgres 5432; do echo waiting for ffspostgres; sleep 2; done']
+    imageOverride:
+      repository: bdekany/featureflagservice
+      tag: 0.4.0-fail
 
   frauddetectionService:
     enabled: true

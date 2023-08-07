@@ -139,6 +139,7 @@
     version "${record.dig('kubernetes', 'labels', 'version')? record.dig('kubernetes', 'labels', 'version') : 'none'}"
     container "${record.dig('kubernetes', 'container_name')? record.dig('kubernetes', 'container_name') : 'none'}"
     namespace "${record.dig('kubernetes', 'namespace_name')? record.dig('kubernetes', 'namespace_name') : 'none'}"
+    cluster_name "rke-azure-us-east-01"
     # timestamp ${time.to_datetime().strftime('%Q')}
   </record>
   remove_keys kubernetes, docker
@@ -151,7 +152,7 @@
   # </store>
   <store>
     @type http
-    endpoint http://{{.Release.Name}}-wavefront-proxy.{{.Release.Namespace}}.svc.cluster.local:2878/logs/json_array?f=logs_json_arr
+    endpoint http://{{.Release.Name}}-otelcol.{{.Release.Namespace}}.svc.cluster.local:2878/logs/json_array?f=logs_json_arr
     open_timeout 2
     json_array true
     <buffer>

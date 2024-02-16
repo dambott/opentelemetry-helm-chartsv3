@@ -1,14 +1,16 @@
 wavefront:
   # AuthType: one of : wavefront-token, csp-api-token, or csp-app-oauth
   # Then use either the token, or the csp-api-token, or the OAuth2 csp-app-secret, csp-app-id and csp-org-id
+  
+  #AuthType: "wavefront-token"
+  #token: <Your token>
   AuthType: "csp-app-oauth"
-  token: <Your AOA/Wavefront Token>
   cspApiToken: <Your CSP API token>
   cspAppId: <Your CSP APP Id>
   cspAppSecret: <Your CSP APP secret>
   cspOrgId: <Your CSP Org Id>
 # Set your URL for the tenant you are on e.g. longboard, surf, metrics etc.
-  url: "https://<YOUR URL>..wavefront.com/api/"
+  url: "https://<YOUR URL>.wavefront.com/api/"
 # Set your cluster name on line 60
 # Leave these 2 log lines with empty strings and uncommented if not usings logs
   logToken: ""
@@ -68,11 +70,15 @@ default:
     tag: ""
     pullPolicy: IfNotPresent
     pullSecrets: []
+  # Default # of replicas for all components
+  replicas: 1
+  # Default schedulingRules for all components      
   schedulingRules:
     nodeSelector: {}
     affinity: {}
     tolerations: []
   securityContext: {}
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -218,6 +224,8 @@ components:
         value: "8080"
       - name: ASPNETCORE_URLS
         value: http://*:$(CART_SERVICE_PORT)
+      - name: FEATURE_FLAG_GRPC_SERVICE_ADDR
+        value: '{{ include "otel-demo.name" . }}-featureflagservice:50053'
       - name: REDIS_ADDR
         value: '{{ include "otel-demo.name" . }}-redis:6379'
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
@@ -414,12 +422,10 @@ components:
         value: "16686"
       - name: JAEGER_SERVICE_HOST
         value: '{{ include "otel-demo.name" . }}-jaeger-query'
-      - name: OTEL_COLLECTOR_PORT
-        value: "4317"
       - name: OTEL_COLLECTOR_PORT_GRPC
         value: "4317"
       - name: OTEL_COLLECTOR_PORT_HTTP
-        value: "4318"        
+        value: "4318"
       - name: OTEL_COLLECTOR_HOST
         value: $(OTEL_COLLECTOR_NAME)
     resources:
@@ -444,7 +450,7 @@ components:
       - name: LOCUST_SPAWN_RATE
         value: "1"
       - name: LOCUST_HOST
-        value: 'http://{{ include "otel-demo.name" . }}-frontend:8080'
+        value: 'http://{{ include "otel-demo.name" . }}-frontendproxy:8080'
       - name: LOCUST_HEADLESS
         value: "false"
       - name: LOCUST_AUTOSTART
@@ -452,7 +458,7 @@ components:
       - name: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION
         value: python
       - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-        value: http://$(OTEL_COLLECTOR_NAME):4318/v1/traces
+        value: http://$(OTEL_COLLECTOR_NAME):4317
     resources:
       limits:
         memory: 120Mi
@@ -609,7 +615,8 @@ components:
       env: true
     imageOverride:
       repository: "redis"
-      tag: "alpine"
+      tag: "7.2-alpine"
+    replicas: 1
     ports:
       - name: redis
         value: 6379

@@ -143,6 +143,9 @@
         "imageOverride": {
           "$ref": "#/definitions/Image"
         },
+        "replicas": {
+          "type": "integer"
+        },
         "service": {
           "$ref": "#/definitions/Service"
         },
@@ -264,6 +267,9 @@
           "items": {
             "$ref": "#/definitions/Env"
           }
+        },
+        "replicas": {
+          "type": "integer"
         },
         "image": {
           "$ref": "#/definitions/Image"
@@ -653,6 +659,18 @@
       "properties": {
         "allowPrivilegeEscalation": {
           "type": "boolean"
+        },
+        "seccompProfile": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "localhostProfile": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            }
+          }
         },
         "capabilities": {
           "type": "object",

@@ -11,7 +11,7 @@ wavefront:
   cspOrgId: <Your CSP Org Id>
 # Set your URL for the tenant you are on e.g. longboard, surf, metrics etc.
   url: "https://<YOUR URL>.wavefront.com/api/"
-# Set your cluster name on line 60
+# Set your cluster name on line 61
 # Leave these 2 log lines with empty strings and uncommented if not usings logs
   logToken: ""
   logURL: ""

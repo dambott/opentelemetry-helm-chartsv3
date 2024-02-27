@@ -566,9 +566,7 @@ components:
     enabled: true
     useDefault:
       env: true
-    imageOverride:
-      repository: "postgres"
-      tag: "14"
+    replicas: 1
     ports:
       - name: postgres
         value: 5432
@@ -582,11 +580,7 @@ components:
     resources:
       limits:
         memory: 120Mi
-    securityContext:
-      runAsUser: 999  # postgres
-      runAsGroup: 999
-      runAsNonRoot: true
-
+        
   kafka:
     enabled: true
     useDefault:

@@ -1,3 +1,6 @@
+{{/*
+Demo component Deployment template
+*/}}
 {{- define "otel-demo.deployment" }}
 ---
 apiVersion: apps/v1
@@ -7,6 +10,7 @@ metadata:
   labels:
     {{- include "otel-demo.labels" . | nindent 4 }}
 spec:
+  replicas: {{ .replicas | default .defaultValues.replicas }}
   selector:
     matchLabels:
       {{- include "otel-demo.selectorLabels" . | nindent 6 }}
@@ -38,6 +42,10 @@ spec:
       tolerations:
         {{- $schedulingRules.tolerations | default .defaultValues.schedulingRules.tolerations | toYaml | nindent 8 }}
       {{- end }}
+      {{- if or .defaultValues.podSecurityContext .podSecurityContext }}
+      securityContext:
+        {{- .podSecurityContext | default .defaultValues.podSecurityContext | toYaml | nindent 8 }}
+      {{- end}}
       containers:
         - name: {{ .name }}
           image: '{{ ((.imageOverride).repository) | default .defaultValues.image.repository }}:{{ ((.imageOverride).tag) | default (printf "%s-%s" (default .Chart.AppVersion .defaultValues.image.tag) (replace "-" "" .name)) }}'
@@ -62,21 +70,33 @@ spec:
           livenessProbe:
             {{- .livenessProbe | toYaml | nindent 12 }}
           {{- end }}
-      {{- if .configuration }}
           volumeMounts:
-          - name: config
-            mountPath: /etc/config
+          {{- range .mountedConfigMaps }}
+            - name: {{ .name | lower }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+          {{- end }}
       volumes:
-        - name: config
+        {{- range .mountedConfigMaps }}
+        - name: {{ .name | lower}}
           configMap:
-            name: {{ include "otel-demo.name" . }}-{{ .name }}-config
-      {{- end }}
+            {{- if .existingConfigMap }}
+            name: {{ .existingConfigMap }}
+            {{- else }}
+            name: {{ include "otel-demo.name" $ }}-{{ $.name }}-{{ .name | lower }}
+            {{- end }}
+        {{- end }}
       {{- if .initContainers }}
       initContainers:
         {{- tpl (toYaml .initContainers) . | nindent 8 }}
       {{- end}}
 {{- end }}
 
+{{/*
+Demo component Service template
+*/}}
 {{- define "otel-demo.service" }}
 {{- if or .ports .service}}
 {{- $service := .service | default dict }}
@@ -114,22 +134,29 @@ spec:
     {{- include "otel-demo.selectorLabels" . | nindent 4 }}
 {{- end}}
 {{- end}}
+
+{{/*
+Demo component ConfigMap template
+*/}}
 {{- define "otel-demo.configmap" }}
-{{- if .configuration}}
+{{- range .mountedConfigMaps }}
+{{- if .data }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "otel-demo.name" . }}-{{ .name }}-config
+  name: {{ include "otel-demo.name" $ }}-{{ $.name }}-{{ .name | lower }}
   labels:
-    service: {{ include "otel-demo.name" . }}-{{ .name }}
-    app: {{ include "otel-demo.name" . }}-{{ .name }}
-    component: {{ include "otel-demo.name" . }}-{{ .name }}-config
+        {{- include "otel-demo.labels" $ | nindent 4 }}
 data:
-  {{- .configuration | toYaml | nindent 2}}
+  {{- .data | toYaml | nindent 2}}
+{{- end}}
 {{- end}}
 {{- end}}
 
+{{/*
+Demo component Ingress template
+*/}}
 {{- define "otel-demo.ingress" }}
 {{- $hasIngress := false}}
 {{- if .ingress }}
@@ -154,7 +181,7 @@ apiVersion: "networking.k8s.io/v1"
 kind: Ingress
 metadata:
   {{- if .name }}
-  name: {{include "otel-demo.name" $ }}-{{ $.name }}-{{ .name }}
+  name: {{include "otel-demo.name" $ }}-{{ $.name }}-{{ .name | lower }}
   {{- else }}
   name: {{include "otel-demo.name" $ }}-{{ $.name }}
   {{- end }}

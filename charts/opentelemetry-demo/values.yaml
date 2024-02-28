@@ -228,7 +228,7 @@ components:
         value: '{{ include "otel-demo.name" . }}-featureflagservice:50053'
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
         value: http://$(OTEL_COLLECTOR_NAME):4318
-      - name: OTLP_LOGS_EXPORTER
+      - name: OTEL_LOGS_EXPORTER
         value: otlp
     resources:
       limits:
@@ -610,6 +610,7 @@ components:
     enabled: true
     useDefault:
       env: true
+    replicas: 1
     ports:
       - name: plaintext
         value: 9092
@@ -733,18 +734,17 @@ jaeger:
   allInOne:
     enabled: true
     args:
-      - "--memory.max-traces"
-      - "10000"
-      - "--query.base-path"
-      - "/jaeger/ui"
-      - "--prometheus.server-url"
-      - 'http://{{ include "otel-demo.name" . }}-prometheus-server:9090'
+      - "--memory.max-traces=5000"
+      - "--query.base-path=/jaeger/ui"
+      - "--prometheus.server-url=http://{{ include \"otel-demo.name\" . }}-prometheus-server:9090"
+      - "--prometheus.query.normalize-calls=true"
+      - "--prometheus.query.normalize-duration=true"
     extraEnv:
       - name: METRICS_STORAGE_TYPE
         value: prometheus
     resources:
       limits:
-        memory: 300Mi
+        memory: 400Mi
   storage:
     type: none
   agent:
@@ -771,6 +771,7 @@ prometheus:
   server:
     extraFlags:
       - "enable-feature=exemplar-storage"
+      - "enable-feature=otlp-write-receiver"
     global:
       scrape_interval: 5s
       scrape_timeout: 3s
@@ -786,7 +787,7 @@ prometheus:
   serverFiles:
     prometheus.yml:
       scrape_configs:
-        - job_name: 'opentelemetry-community-demo'
+        - job_name: 'otel-collector'
           honor_labels: true
           kubernetes_sd_configs:
             - role: pod

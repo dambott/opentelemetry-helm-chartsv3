@@ -21,7 +21,7 @@ wavefront:
 #  logURL: "--logServerIngestionToken <Your Token Here"
 
 default:
-  # list of environment variables applied to all components
+  # List of environment variables applied to all components
   env:
     - name: OTEL_APPLICATION_NAME
       valueFrom:
@@ -72,11 +72,12 @@ default:
     pullSecrets: []
   # Default # of replicas for all components
   replicas: 1
-  # Default schedulingRules for all components      
+  # Default schedulingRules for all components
   schedulingRules:
     nodeSelector: {}
     affinity: {}
     tolerations: []
+  # Default securityContext for all components
   securityContext: {}
 
 serviceAccount:
@@ -166,10 +167,19 @@ components:
   #         - secretName: demo-tls
   #           hosts:
   #             - demo.example.com
-  # # Command to use in the container spec, in case you don't want to go with the default command from the image.
+  ## Command to use in the container spec, in case you don't want to go with the default command from the image.
   #   command: []
-  # # Configuration to for this service; will create a ConfigMap, Volume, and Mount it into the container being spun up/.
-  #   configuration: {}
+  ## Configuration to for this component; will create a Volume, and Mount backed by an optionally created ConfigMap.
+  ## The name, mountPath are required, and one of existingConfigMap or data is required.
+  ## If an existing ConfigMap is not provided, the contents under data will be used for the created ConfigMap.
+  #   mountedConfigMaps: []
+  #     - name: my-config
+  #       mountPath: /etc/config
+  #       subPath:
+  #       exsitingConfigMap: my-configmap
+  #       data:
+  #         my-config.yaml: |
+  #           key: value
   # # Kubernetes container health check options
   #   livenessProbe: {}
   # # Optional init container to run before the pod starts.
@@ -177,6 +187,17 @@ components:
   #     - name: <init-container-name>
   #       image: <init-container-image>
   #       command: [list of commands for the init container to run]
+  # # Replicas for the component
+  #  replicas: 1
+  # # Optional pod security context for setting user ID (UID), group ID (GID) and other security policies
+  # # This will be applied at pod level, can be applied globally for all pods: .Values.default.podSecurityContext
+  # # Or it can be applied to a specific component: .Values.components.<component-name>.podSecurityContext
+  #    podSecurityContext:
+  #      runAsGroup: 65534
+  #      runAsNonRoot: true
+  #      runAsUser: 65534
+
+
   accountingService:
     enabled: true
     useDefault:
@@ -598,7 +619,7 @@ components:
       - name: KAFKA_ADVERTISED_LISTENERS
         value: 'PLAINTEXT://{{ include "otel-demo.name" . }}-kafka:9092'
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
-        value: http://$(OTEL_COLLECTOR_NAME):4317
+        value: http://$(OTEL_COLLECTOR_NAME):4318
       - name: KAFKA_HEAP_OPTS
         value: "-Xmx200M -Xms200M"
     resources:
@@ -632,9 +653,12 @@ opentelemetry-collector:
   enabled: true
   nameOverride: otelcol
   mode: deployment
+  presets:
+    kubernetesAttributes:
+      enabled: true
   resources:
     limits:
-      memory: 125Mi
+      memory: 200Mi
   service:
     type: ClusterIP
   ports:
@@ -649,16 +673,11 @@ opentelemetry-collector:
     prometheus.io/scrape: "true"
     prometheus.io/port: "9464"
     opentelemetry_community_demo: "true"
-  command:
-    extraArgs:
-      - "--feature-gates=service.connectors"
   config:
     receivers:
       otlp:
         protocols:
           http:
-            # Bind to 127.0.0.1 to allow for `kubectl port-forward` to work
-            endpoint: 127.0.0.1:4318
             # Since this collector needs to receive data from the web, enable cors for all origins
             # `allowed_origins` can be refined for your deployment domain
             cors:
@@ -673,38 +692,39 @@ opentelemetry-collector:
         tls:
           insecure: true
       # Create an exporter to Prometheus (metrics)
-      prometheus:
-        endpoint: '0.0.0.0:9464'
-        resource_to_telemetry_conversion:
-          enabled: true
-        enable_open_metrics: true
+      otlphttp/prometheus:
+        endpoint: 'http://{{ include "otel-demo.name" . }}-prometheus-server:9090/api/v1/otlp'
+        tls:
+          insecure: true
+      opensearch:
+        logs_index: otel
+        http:
+          endpoint: "http://otel-demo-opensearch:9200"
+          tls:
+            insecure: true
 
     processors:
-      # we can remove when this is fixed: https://github.com/open-telemetry/opentelemetry-demo/issues/737
-      transform:
-        metric_statements:
-          - context: metric
-            statements:
-              - set(description, "Measures the duration of inbound HTTP requests") where name == "http.server.duration"
-      # we can remove when this is fixed: https://github.com/open-telemetry/opentelemetry-demo/issues/826
-      filter/ottl:
-        error_mode: ignore
-        metrics:
-          metric:
-            - 'name == "queueSize"'
+      resource:
+        attributes:
+        - key: service.instance.id
+          from_attribute: k8s.pod.uid
+          action: insert
 
     connectors:
-      spanmetrics:
+      spanmetrics: {}
 
     service:
       pipelines:
         traces:
-          processors: [memory_limiter, batch]
-          exporters: [otlp, logging, spanmetrics]
+          processors: [memory_limiter, resource, batch]
+          exporters: [otlp, debug, spanmetrics]
         metrics:
           receivers: [otlp, spanmetrics]
-          processors: [memory_limiter, filter/ottl, transform, batch]
-          exporters: [prometheus, logging]
+          processors: [memory_limiter, resource, batch]
+          exporters: [otlphttp/prometheus, debug]
+        logs:
+          processors: [memory_limiter, resource, batch]
+          exporters: [opensearch, debug]
 
 jaeger:
   enabled: true
@@ -778,7 +798,7 @@ prometheus:
               regex: true
 
 grafana:
-  enabled: false
+  enabled: true
   grafana.ini:
     auth:
       disable_login_form: true
@@ -790,6 +810,8 @@ grafana:
       root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana"
       serve_from_sub_path: true
   adminPassword: admin
+  plugins:
+    - grafana-opensearch-datasource
   datasources:
     datasources.yaml:
       apiVersion: 1
@@ -815,6 +837,21 @@ grafana:
           url: 'http://{{ include "otel-demo.name" . }}-jaeger-query:16686/jaeger/ui'
           editable: true
           isDefault: false
+
+        - name: OpenSearch
+          type: grafana-opensearch-datasource
+          url: 'http://otel-demo-opensearch:9200/'
+          access: proxy
+          editable: true
+          isDefault: false
+          jsonData:
+            database: otel
+            flavor: opensearch
+            logLevelField: severity
+            logMessageField: body
+            pplEnabled: true
+            timeField: observedTimestamp
+            version: 2.11.1
   dashboardProviders:
     dashboardproviders.yaml:
       apiVersion: 1
@@ -831,4 +868,24 @@ grafana:
     default: '{{ include "otel-demo.name" . }}-grafana-dashboards'
   resources:
     limits:
-      memory: 100Mi
+      memory: 150Mi
+
+opensearch:
+  enabled: true
+  fullnameOverride: otel-demo-opensearch
+  clusterName: demo-cluster
+  nodeGroup: otel-demo
+  singleNode: true
+  opensearchJavaOpts: "-Xms300m -Xmx300m"
+  persistence:
+    enabled: false
+  extraEnvs:
+    - name: "bootstrap.memory_lock"
+      value: "true"
+    - name: "DISABLE_INSTALL_DEMO_CONFIG"
+      value: "true"
+    - name: "DISABLE_SECURITY_PLUGIN"
+      value: "true"
+  resources:
+    limits:
+      memory: 1Gi

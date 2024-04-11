@@ -28,9 +28,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "create"
-      ]
+      "required": ["create"]
     },
     "components": {
       "$ref": "#/definitions/Components"
@@ -81,7 +79,7 @@
         "emailService": {
           "$ref": "#/definitions/Component"
         },
-        "featureflagService": {
+        "flagd": {
           "$ref": "#/definitions/Component"
         },
         "frauddetectionService": {
@@ -172,8 +170,7 @@
         },
         "command": {
           "type": "array",
-          "items": {
-          }
+          "items": {}
         },
         "mountedConfigMaps": {
           "type": "array",
@@ -286,6 +283,9 @@
           "$ref": "#/definitions/SchedulingRules"
         },
         "securityContext": {
+          "type": "object"
+        },
+        "podSecurityContext": {
           "type": "object"
         }
       },
@@ -459,9 +459,7 @@
         },
         "tolerations": {
           "type": "array",
-          "items": {
-            
-          }
+          "items": {}
         }
       }
     },
@@ -748,7 +746,7 @@
       ],
       "oneOf": [
         {
-          "required": ["configMap"]
+          "required": ["existingConfigMap"]
         },
         {
           "required": ["data"]

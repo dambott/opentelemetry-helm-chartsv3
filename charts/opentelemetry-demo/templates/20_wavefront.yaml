@@ -72,7 +72,13 @@ spec:
           value: --customTracingListenerPorts 30001 --customMessageTags log --pushListenerPorts 2878 --otlpGrpcListenerPorts 4317 --otlpHttpListenerPorts 4318 {{ .Values.wavefront.logURL }} {{ .Values.wavefront.logToken }}
         resources:
           limits:
+            cpu: "1"
+            ephemeral-storage: 8Gi
             memory: 4Gi
+          requests:
+            cpu: 100m
+            ephemeral-storage: 2Gi
+            memory: 1Gi
         ports:
         - containerPort: 2878
           protocol: TCP
